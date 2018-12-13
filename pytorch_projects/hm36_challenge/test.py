@@ -4,6 +4,8 @@ import copy
 import time
 import logging
 
+import numpy as np
+
 # define project dependency
 import _init_paths
 
@@ -94,12 +96,12 @@ def main():
     # test_imdbs[0].mean_bone_length = train_imdbs[0].mean_bone_length
 
     # prepare network
-    assert os.path.exists(s_args.model), 'Cannot find model!'
+    # assert os.path.exists(s_args.model), 'Cannot find model!'
     logger.info('Load checkpoint from {}'.format(s_args.model))
     joint_num = dataset_test.joint_num
     net = get_pose_net(config.network, joint_num)
     net = DataParallelModel(net).cuda()  # claim multi-gpu in CUDA_VISIBLE_DEVICES
-    ckpt = torch.load(s_args.model)  # or other path/to/model
+    ckpt = torch.load('/home/shiva/3d-pose-test/integral-human-pose/model/hm36_challenge/model_chall_trainval_152ft_384x288.pth.tar')  # or other path/to/model
     net.load_state_dict(ckpt['network'])
     logger.info("Net total params: {:.2f}M".format(sum(p.numel() for p in net.parameters()) / 1000000.0))
 
@@ -111,7 +113,41 @@ def main():
     preds_in_patch, _ = validNet(test_data_loader, net, config.loss, result_func, loss_func, merge_flip_func,
                                  config.train.patch_width, config.train.patch_height, devices,
                                  test_imdbs[0].flip_pairs, flip_test=True, flip_fea_merge=False)
-    evalNetChallenge(0, preds_in_patch, test_data_loader, test_imdbs[0], final_log_path)
+    a, b = evalNetChallenge(0, preds_in_patch, test_data_loader, test_imdbs[0], final_log_path)
+    #np.savxt('preds_patch.txt', a)
+    with open('test1.txt', 'w') as outfile:
+        # I'm writing a header here just for the sake of readability
+        # Any line starting with "#" will be ignored by numpy.loadtxt
+        outfile.write('# Array shape: {0}\n'.format(a.shape))
+
+        # Iterating through a ndimensional array produces slices along
+        # the last axis. This is equivalent to data[i,:,:] in this case
+        for data_slice in a:
+
+            # The formatting string indicates that I'm writing out
+            # the values in left-justified columns 7 characters in width
+            # with 2 decimal places.  
+            np.savetxt(outfile, data_slice, fmt='%-7.2f')
+
+            # Writing out a break to indicate different slices...
+            outfile.write('# New slice\n') 
+    #np.savetxt('preds_camera.txt', b)
+    with open('test2.txt', 'w') as outfile:
+        # I'm writing a header here just for the sake of readability
+        # Any line starting with "#" will be ignored by numpy.loadtxt
+        outfile.write('# Array shape: {0}\n'.format(b.shape))
+
+        # Iterating through a ndimensional array produces slices along
+        # the last axis. This is equivalent to data[i,:,:] in this case
+        for data_slice in b:
+
+            # The formatting string indicates that I'm writing out
+            # the values in left-justified columns 7 characters in width
+            # with 2 decimal places.  
+            np.savetxt(outfile, data_slice, fmt='%-7.2f')
+
+            # Writing out a break to indicate different slices...
+            outfile.write('# New slice\n')
     print('Testing %.2f seconds.....' % (time.time() - beginT))
 
 if __name__ == "__main__":

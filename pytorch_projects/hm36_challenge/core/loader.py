@@ -32,7 +32,7 @@ class single_patch_Dataset(data.Dataset):
         self.aug_config = aug_config
         self.label_func = label_func
         self.label_config = label_config
-
+        print(len(self.db))
         if self.is_train:
             self.do_augment = True
         else:
@@ -40,6 +40,7 @@ class single_patch_Dataset(data.Dataset):
             # padding samples to match input_batch_size
             extra_db = len(self.db) % batch_size
             for i in range(0, batch_size - extra_db):
+                print(i)
                 self.db.append(self.db[i])
 
         self.depth_in_image = True
@@ -54,7 +55,7 @@ class single_patch_Dataset(data.Dataset):
         the_db = self.db[index]
 
         img_patch, label, label_weight = \
-            get_single_patch_sample(the_db['image'], the_db['center_x'], the_db['center_y'],
+            get_single_patch_sample(index, the_db['image'], the_db['center_x'], the_db['center_y'],
                                     the_db['width'], the_db['height'],
                                     the_db['joints_3d'].copy(), the_db['joints_3d_vis'].copy(),
                                     the_db['flip_pairs'].copy(), the_db['parent_ids'].copy(),
