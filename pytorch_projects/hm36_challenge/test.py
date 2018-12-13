@@ -62,21 +62,21 @@ def main():
 
     # dataset, --detector=maskRCNN_R50-FPN
     logger.info("Creating dataset")
-    target_id = config.dataiter.target_id
+    target_id = config.dataiter.target_id #2
     test_imdbs = []
     test_imdbs.append(
         eval(config.dataset.name[target_id])(config.dataset.test_image_set[target_id], config.dataset.path[target_id],
          config.train.patch_width, config.train.patch_height,
          config.train.rect_3d_width, config.train.rect_3d_height))
 
-    train_imdbs = []
-    train_imdbs.append(
-        eval(config.dataset.name[target_id])(config.dataset.train_image_set[target_id], config.dataset.path[target_id],
-         config.train.patch_width, config.train.patch_height,
-         config.train.rect_3d_width, config.train.rect_3d_height))
+    # train_imdbs = []
+    # train_imdbs.append(
+    #     eval(config.dataset.name[target_id])(config.dataset.train_image_set[target_id], config.dataset.path[target_id],
+    #      config.train.patch_width, config.train.patch_height,
+    #      config.train.rect_3d_width, config.train.rect_3d_height))
 
 
-    batch_size = len(devices) * config.dataiter.batch_images_per_ctx
+    batch_size = 5 #48
 
     dataset_test = eval(config.dataset.name[target_id] + "_Dataset")(
         [test_imdbs[0]], False, s_args.detector, config.train.patch_width,
@@ -86,12 +86,12 @@ def main():
     test_data_loader = DataLoader(dataset=dataset_test, batch_size=batch_size, shuffle=False,
                                   num_workers=config.dataiter.threads, drop_last=False)
 
-    dataset_train = eval(config.dataset.name[target_id] + "_Dataset")(
-        [train_imdbs[0]], False, s_args.detector, config.train.patch_width,
-        config.train.patch_height, config.train.rect_3d_width, config.train.rect_3d_height, batch_size,
-        config.dataiter.mean, config.dataiter.std, config.aug, label_func, config.loss)
+    # dataset_train = eval(config.dataset.name[target_id] + "_Dataset")(
+    #     [train_imdbs[0]], False, s_args.detector, config.train.patch_width,
+    #     config.train.patch_height, config.train.rect_3d_width, config.train.rect_3d_height, batch_size,
+    #     config.dataiter.mean, config.dataiter.std, config.aug, label_func, config.loss)
 
-    test_imdbs[0].mean_bone_length = train_imdbs[0].mean_bone_length
+    # test_imdbs[0].mean_bone_length = train_imdbs[0].mean_bone_length
 
     # prepare network
     assert os.path.exists(s_args.model), 'Cannot find model!'

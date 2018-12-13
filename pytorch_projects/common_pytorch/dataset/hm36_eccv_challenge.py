@@ -37,21 +37,25 @@ def jnt_bbox_db_core(name, cache_path, dataset_path, image_set_name, image_names
     if db != None:
         return db
 
-    img_pred_file = '{}_{}samples_img_res.pkl'.format('HM36_eccv_challenge_' + image_set_name, len(image_names))
-    img_pred_file = os.path.join(dataset_path, image_set_name, img_pred_file)
-    with open(img_pred_file, 'rb') as fid:
-        img_pred = pk.load(fid)
+    keypoints = []
+
+    with open ('outfile', 'rb') as fp:
+        keypoints = pickle.load(fp)
+    # img_pred_file = '{}_{}samples_img_res.pkl'.format('HM36_eccv_challenge_' + image_set_name, len(image_names))
+    # img_pred_file = os.path.join(dataset_path, image_set_name, img_pred_file)
+    # with open(img_pred_file, 'rb') as fid:
+    #     img_pred = pk.load(fid)
 
     dt_db = []
     for idx in range(len(image_names)):
         img_path = os.path.join(dataset_path, image_set_name, 'IMG', '%05d.jpg' % (idx + 1))
-        pred_pose_in_img_wz_score = img_pred[idx]["kpts"]  # 18x3, already in hm36 skeleton structure
-        pred_pose_vis = img_pred[idx]["vis"]
+        pred_pose_in_img_wz_score = keypoints[idx]  # 18x3, already in hm36 skeleton structure
+        # pred_pose_vis = img_pred[idx]["vis"]
 
         if image_set_name == 'Test':
             # only thing need to do: generate bbox around kpts
             mask = np.where(pred_pose_vis[:, 0] > 0)  # only align visible joints
-            u, d, l, r = calc_kpt_bound(pred_pose_in_img_wz_score[mask[0], 0:2], pred_pose_vis[mask[0], 0:2])
+            u, d, l, r = calc_kpt_bound(pred_pose_in_img_wz_score, np.ones(pred_pose_in_img_wz_score.shape[0], 2))
             align_joints_2d_wz = joints_2d_vis = gtPose = np.zeros((18, 3))
             skeleton_length = s = rot = t = 0
         elif image_set_name in ['Train', 'Val']:

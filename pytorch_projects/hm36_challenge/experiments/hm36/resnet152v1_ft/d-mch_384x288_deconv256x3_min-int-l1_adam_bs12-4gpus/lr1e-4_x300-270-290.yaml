@@ -21,7 +21,7 @@ dataset:
   test_image_set:
    - 'valid'
    - 'val2017'
-   - 'Val'
+   - 'Test'
 dataiter:
     batch_images_per_ctx: 12
     threads: 16
