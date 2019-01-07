@@ -46,7 +46,16 @@ def jnt_bbox_db_core(name, cache_path, dataset_path, image_set_name, image_names
     for idx in range(len(image_names)):
         img_path = os.path.join(dataset_path, image_set_name, 'IMG', '%05d.jpg' % (idx + 1))
         pred_pose_in_img_wz_score = img_pred[idx]["kpts"]  # 18x3, already in hm36 skeleton structure
-        pred_pose_vis = img_pred[idx]["vis"]
+        pred_pose_in_img_wz_score = np.reshape(pred_pose_in_img_wz_score, (28, 2))
+        pred_pose_in_img_wz_score = pred_pose_in_img_wz_score[[4, 23, 24, 25, 18, 19, 20, 3, 5, 6, 7, 9, 10, 11, 14, 15, 16], :]
+        thor = (pred_pose_in_img_wz_score[s_36_lsh_jt_idx] + pred_pose_in_img_wz_score[s_36_rsh_jt_idx]) * 0.5
+        thor = thor.reshape((1, 3))
+        pred_pose_in_img_wz_score = np.concatenate((pred_pose_in_img_wz_score, thor), axis=0))
+        pred_pose_vis = np.ones((18, 2))
+        gtpose = img_pred[idx]["gtpose"]
+        gtpose = np.reshape(gtpose, (28, 3))
+        gtpose = gtpose[[4, 23, 24, 25, 18, 19, 20, 3, 5, 6, 7, 9, 10, 11, 14, 15, 16], :]
+        gtpose = gtpose - gtpose[0, :]
 
         if image_set_name == 'Test':
             # only thing need to do: generate bbox around kpts
@@ -55,16 +64,13 @@ def jnt_bbox_db_core(name, cache_path, dataset_path, image_set_name, image_names
             align_joints_2d_wz = joints_2d_vis = gtPose = np.zeros((18, 3))
             skeleton_length = s = rot = t = 0
         elif image_set_name in ['Train', 'Val']:
-            # process pose
-            gt_file = os.path.join(dataset_path, image_set_name, 'POSE', '%05d.csv' % (idx + 1))
-            gtPose = genfromtxt(gt_file, delimiter=',')
-
             # add thorax
             if joint_num == s_36_jt_num:
                 thorax = (gtPose[s_36_lsh_jt_idx] + gtPose[s_36_rsh_jt_idx]) * 0.5
                 thorax = thorax.reshape((1, 3))
                 gtPose = np.concatenate((gtPose, thorax), axis=0)
             assert len(gtPose) == s_36_jt_num, "#Joint Must be 18, Now #Joint %d" % len(gtPose)
+            
             # align
             mask = np.where(pred_pose_vis[:, 0] > 0)  # only align visible joints
             target_pose = pred_pose_in_img_wz_score[mask[0], 0:2]
